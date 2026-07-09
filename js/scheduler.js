@@ -1,0 +1,239 @@
+// scheduler.js
+// Americano round-generation engine for a club with a FIXED number of courts
+// (default 2). Pure functions only â€” no Firebase, no DOM â€” so this file can
+// be tested or reused on its own.
+//
+// Data shapes used throughout:
+//   player  = { id: string, name: string }
+//   match   = { court: number, teamA: [id, id], teamB: [id, id],
+//               scoreA: number|null, scoreB: number|null, completed: boolean }
+//   round   = { roundNumber: number, sitOut: [id...], matches: [match...] }
+
+function pairKey(a, b) {
+  return [a, b].sort().join('|');
+}
+
+/**
+ * Rebuild partner/opponent/play/sit-out history from the rounds played so far.
+ * Only completed rounds should normally be passed in, but this works either way
+ * since it just counts how players have been grouped, not the scores.
+ */
+export function buildHistory(players, rounds) {
+  const history = {
+    partner: {},     // pairKey -> times played as partners
+    opponent: {},    // pairKey -> times played as opponents
+    playCount: {},   // playerId -> rounds played
+    sitOutCount: {}  // playerId -> rounds sat out
+  };
+
+  players.forEach(p => {
+    history.playCount[p.id] = 0;
+    history.sitOutCount[p.id] = 0;
+  });
+
+  rounds.forEach(round => {
+    round.sitOut.forEach(id => {
+      if (history.sitOutCount[id] !== undefined) history.sitOutCount[id]++;
+    });
+    round.matches.forEach(match => {
+      const [a1, a2] = match.teamA;
+      const [b1, b2] = match.teamB;
+
+      [a1, a2, b1, b2].forEach(id => {
+        if (history.playCount[id] !== undefined) history.playCount[id]++;
+      });
+
+      const pkA = pairKey(a1, a2);
+      history.partner[pkA] = (history.partner[pkA] || 0) + 1;
+      const pkB = pairKey(b1, b2);
+      history.partner[pkB] = (history.partner[pkB] || 0) + 1;
+
+      [a1, a2].forEach(x => {
+        [b1, b2].forEach(y => {
+          const ok = pairKey(x, y);
+          history.opponent[ok] = (history.opponent[ok] || 0) + 1;
+        });
+      });
+    });
+  });
+
+  return history;
+}
+
+/**
+ * Decide who plays this round and who sits out.
+ * Priority to play: most sit-outs so far, then fewest rounds played, then random.
+ * The playing pool size is always a multiple of 4 (so courts fill with full 2v2 matches),
+ * capped at courts * 4.
+ */
+function choosePlayingPool(players, history, courts) {
+  const maxPlayers = courts * 4;
+  const activeIds = players.map(p => p.id);
+
+  const sorted = [...activeIds].sort((a, b) => {
+    if (history.sitOutCount[b] !== history.sitOutCount[a]) {
+      return history.sitOutCount[b] - history.sitOutCount[a]; // most sit-outs plays first
+    }
+    if (history.playCount[a] !== history.playCount[b]) {
+      return history.playCount[a] - history.playCount[b]; // fewest rounds played plays first
+    }
+    return Math.random() - 0.5;
+  });
+
+  const poolSize = Math.min(maxPlayers, Math.floor(activeIds.length / 4) * 4);
+  const playing = sorted.slice(0, poolSize);
+  const sitOut = sorted.slice(poolSize);
+  return { playing, sitOut };
+}
+
+function teamSplits4(four) {
+  const [w, x, y, z] = four;
+  return [
+    [[w, x], [y, z]],
+    [[w, y], [x, z]],
+    [[w, z], [x, y]]
+  ];
+}
+
+function combinations(arr, k) {
+  const results = [];
+  const combo = [];
+  (function go(start) {
+    if (combo.length === k) { results.push([...combo]); return; }
+    for (let i = start; i < arr.length; i++) {
+      combo.push(arr[i]);
+      go(i + 1);
+      combo.pop();
+    }
+  })(0);
+  return results;
+}
+
+/**
+ * Given a pool of 4 or 8 players, find the court/team arrangement that minimises
+ * repeated partnerships and repeated opponents, using a quadratic penalty so
+ * repeats already seen twice are avoided harder than repeats seen once.
+ */
+function bestArrangement(pool, history) {
+  const penalty = (a, b, type) => {
+    const key = pairKey(a, b);
+    const count = type === 'partner' ? (history.partner[key] || 0) : (history.opponent[key] || 0);
+    return count * count;
+  };
+
+  const scoreCourt = (teamA, teamB) => {
+    let s = penalty(teamA[0], teamA[1], 'partner') + penalty(teamB[0], teamB[1], 'partner');
+    teamA.forEach(a => teamB.forEach(b => { s += penalty(a, b, 'opponent'); }));
+    return s;
+  };
+
+  const bestSplitFor4 = (four) => {
+    let best = null;
+    teamSplits4(four).forEach(([teamA, teamB]) => {
+      const s = scoreCourt(teamA, teamB);
+      if (!best || s < best.score) best = { score: s, teamA, teamB };
+    });
+    return best;
+  };
+
+  if (pool.length === 4) {
+    const best = bestSplitFor4(pool);
+    return [{ teamA: best.teamA, teamB: best.teamB }];
+  }
+
+  // pool.length === 8: choose which 4 go on court 1 (rest go to court 2),
+  // fixing pool[0] into the court-1 group to avoid double-counting mirrored splits.
+  let best = null;
+  const others = [1, 2, 3, 4, 5, 6, 7];
+  combinations(others, 3).forEach(combo => {
+    const court1Idx = new Set([0, ...combo]);
+    const court1 = pool.filter((_, i) => court1Idx.has(i));
+    const court2 = pool.filter((_, i) => !court1Idx.has(i));
+
+    const bestC1 = bestSplitFor4(court1);
+    const bestC2 = bestSplitFor4(court2);
+    const total = bestC1.score + bestC2.score;
+
+    if (!best || total < best.score) {
+      best = {
+        score: total,
+        courts: [
+          { teamA: bestC1.teamA, teamB: bestC1.teamB },
+          { teamA: bestC2.teamA, teamB: bestC2.teamB }
+        ]
+      };
+    }
+  });
+  return best.courts;
+}
+
+/**
+ * Generate the next round.
+ * @param {Array} players - all players currently in the tournament
+ * @param {Array} existingRounds - rounds played so far
+ * @param {number} courts - number of courts available (default 2)
+ */
+export function generateNextRound(players, existingRounds, courts = 2) {
+  if (players.length < 4) {
+    throw new Error('Need at least 4 players to generate a round.');
+  }
+
+  const history = buildHistory(players, existingRounds);
+  const { playing, sitOut } = choosePlayingPool(players, history, courts);
+
+  if (playing.length < 4) {
+    throw new Error('Not enough players available to fill a court this round.');
+  }
+
+  const arrangement = bestArrangement(playing, history);
+
+  const matches = arrangement.map((c, i) => ({
+    court: i + 1,
+    teamA: c.teamA,
+    teamB: c.teamB,
+    scoreA: null,
+    scoreB: null,
+    completed: false
+  }));
+
+  return {
+    roundNumber: existingRounds.length + 1,
+    sitOut,
+    matches
+  };
+}
+
+/**
+ * Tally cumulative points per player across all completed matches.
+ * Returns players sorted by total points desc, then average points per round desc.
+ */
+export function computeStandings(players, rounds) {
+  const totals = {};
+  const played = {};
+  players.forEach(p => { totals[p.id] = 0; played[p.id] = 0; });
+
+  rounds.forEach(round => {
+    round.matches.forEach(match => {
+      if (!match.completed) return;
+      const { teamA, teamB, scoreA, scoreB } = match;
+      teamA.forEach(id => {
+        totals[id] = (totals[id] || 0) + scoreA;
+        played[id] = (played[id] || 0) + 1;
+      });
+      teamB.forEach(id => {
+        totals[id] = (totals[id] || 0) + scoreB;
+        played[id] = (played[id] || 0) + 1;
+      });
+    });
+  });
+
+  return players
+    .map(p => ({
+      id: p.id,
+      name: p.name,
+      points: totals[p.id] || 0,
+      roundsPlayed: played[p.id] || 0,
+      avg: played[p.id] ? +(totals[p.id] / played[p.id]).toFixed(2) : 0
+    }))
+    .sort((a, b) => b.points - a.points || b.avg - a.avg || a.name.localeCompare(b.name));
+}

@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Live — Court Sheet</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body class="viewer">
+  <div class="topbar">
+    <div class="topbar__brand">
+      <h1 id="viewer-tournament-name">Court&nbsp;Sheet</h1>
+    </div>
+    <span id="viewer-status" class="live-dot">Live</span>
+  </div>
+
+  <div class="wrap">
+    <div id="viewer-content">
+      <div class="empty-state">
+        <h3>Waiting for a tournament…</h3>
+        <p>Nothing is currently in progress. Check back once the organiser starts one.</p>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="js/viewer.js"></script>
+</body>
+</html>

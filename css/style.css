@@ -1,0 +1,674 @@
+/* ============================================================
+   Court Sheet â€” design tokens
+   A club scoreboard tool: bold enough to read from across a room
+   on the clubhouse screen, calm enough to fill in scores on a phone.
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
+
+:root {
+  /* Color */
+  --ink: #12181b;
+  --ink-soft: #1c2528;
+  --court: #1b6e63;
+  --court-light: #2c8c7e;
+  --chalk: #f3f1e7;
+  --chalk-dim: #d8d4c4;
+  --volt: #c4f135;
+  --clay: #b5502e;
+  --slate: #5b6b6a;
+  --slate-light: #8fa19f;
+  --line: rgba(243, 241, 231, 0.14);
+  --line-dark: rgba(18, 24, 27, 0.12);
+
+  /* Type */
+  --font-display: 'Big Shoulders Display', sans-serif;
+  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'Space Mono', monospace;
+
+  /* Layout */
+  --radius: 10px;
+  --radius-lg: 18px;
+  --max-width: 1100px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  background: var(--chalk);
+  color: var(--ink);
+  line-height: 1.5;
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  margin: 0 0 0.4em;
+  text-transform: uppercase;
+}
+
+a {
+  color: inherit;
+}
+
+button {
+  font-family: var(--font-body);
+}
+
+/* Visible keyboard focus everywhere */
+:focus-visible {
+  outline: 3px solid var(--volt);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+/* ============================================================
+   Court-line motif â€” the signature recurring graphic.
+   A thin schematic court outline used as a divider / background
+   texture, echoing the padel/tennis court itself rather than a
+   generic card or gradient.
+   ============================================================ */
+
+.court-rule {
+  height: 14px;
+  margin: 0 0 1.5rem;
+  background-image:
+    linear-gradient(to right, var(--line-dark) 1px, transparent 1px),
+    linear-gradient(to right, var(--line-dark) 1px, transparent 1px);
+  background-position: 0 0, 50% 0;
+  background-repeat: no-repeat;
+  background-size: 1px 100%, 1px 100%;
+  border-top: 1px solid var(--line-dark);
+  border-bottom: 1px solid var(--line-dark);
+  opacity: 0.6;
+}
+
+.court-rule--light {
+  border-color: var(--line);
+  background-image:
+    linear-gradient(to right, var(--line) 1px, transparent 1px),
+    linear-gradient(to right, var(--line) 1px, transparent 1px);
+}
+
+/* ============================================================
+   Buttons
+   ============================================================ */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5em;
+  font-family: var(--font-display);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  font-size: 0.95rem;
+  padding: 0.75em 1.4em;
+  border-radius: var(--radius);
+  border: 2px solid var(--ink);
+  background: var(--ink);
+  color: var(--chalk);
+  cursor: pointer;
+  transition: transform 0.12s ease, background 0.12s ease;
+}
+
+.btn:hover {
+  background: var(--ink-soft);
+}
+
+.btn:active {
+  transform: translateY(1px);
+}
+
+.btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.btn--primary {
+  background: var(--court);
+  border-color: var(--court);
+  color: var(--chalk);
+}
+
+.btn--primary:hover {
+  background: var(--court-light);
+  border-color: var(--court-light);
+}
+
+.btn--volt {
+  background: var(--volt);
+  border-color: var(--volt);
+  color: var(--ink);
+}
+
+.btn--volt:hover {
+  filter: brightness(1.08);
+}
+
+.btn--ghost {
+  background: transparent;
+  color: var(--ink);
+}
+
+.btn--danger {
+  background: transparent;
+  border-color: var(--clay);
+  color: var(--clay);
+}
+
+.btn--danger:hover {
+  background: var(--clay);
+  color: var(--chalk);
+}
+
+.btn--small {
+  font-size: 0.8rem;
+  padding: 0.5em 1em;
+}
+
+/* ============================================================
+   Landing page
+   ============================================================ */
+
+.landing {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: var(--ink);
+  color: var(--chalk);
+  text-align: center;
+  padding: 2rem 1.5rem;
+}
+
+.landing__eyebrow {
+  font-family: var(--font-mono);
+  color: var(--volt);
+  font-size: 0.85rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 0.75rem;
+}
+
+.landing h1 {
+  font-size: clamp(2.4rem, 7vw, 4.2rem);
+  line-height: 0.95;
+  margin-bottom: 0.6rem;
+}
+
+.landing p {
+  color: var(--slate-light);
+  max-width: 34rem;
+  margin: 0 auto 2.2rem;
+  font-size: 1.05rem;
+}
+
+.landing__actions {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* ============================================================
+   Shared app shell (admin + viewer)
+   ============================================================ */
+
+.topbar {
+  background: var(--ink);
+  color: var(--chalk);
+  padding: 1rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.topbar__brand {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+}
+
+.topbar__brand h1 {
+  font-size: 1.4rem;
+  margin: 0;
+}
+
+.topbar__brand span {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--volt);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.wrap {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 1.75rem 1.5rem 4rem;
+}
+
+.card {
+  background: #fff;
+  border: 1px solid var(--line-dark);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.card h2 {
+  font-size: 1.3rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-bottom: 1rem;
+}
+
+.field label {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--slate);
+  font-weight: 600;
+}
+
+.field input, .field select {
+  font-family: var(--font-body);
+  font-size: 1rem;
+  padding: 0.65em 0.8em;
+  border: 1.5px solid var(--line-dark);
+  border-radius: var(--radius);
+  background: var(--chalk);
+}
+
+.inline-form {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+
+.inline-form .field {
+  margin-bottom: 0;
+  flex: 1 1 180px;
+}
+
+.tag {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 0.25em 0.6em;
+  border-radius: 100px;
+  background: var(--chalk-dim);
+  color: var(--ink);
+}
+
+.tag--live {
+  background: var(--volt);
+}
+
+.tag--done {
+  background: var(--slate-light);
+  color: #fff;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 3rem 1.5rem;
+  color: var(--slate);
+}
+
+.empty-state h3 {
+  color: var(--ink);
+}
+
+/* Player chips */
+.chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.chip {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--chalk);
+  border: 1.5px solid var(--line-dark);
+  border-radius: 100px;
+  padding: 0.4em 0.5em 0.4em 0.9em;
+  font-size: 0.9rem;
+}
+
+.chip button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--clay);
+  font-size: 1rem;
+  line-height: 1;
+  padding: 0.2em 0.4em;
+  border-radius: 50%;
+}
+
+.chip button:hover {
+  background: var(--clay);
+  color: #fff;
+}
+
+/* Tournament list */
+.tourn-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.tourn-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.2rem;
+  border: 1.5px solid var(--line-dark);
+  border-radius: var(--radius);
+  flex-wrap: wrap;
+}
+
+.tourn-row__meta {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.tourn-row__name {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.1rem;
+  text-transform: uppercase;
+}
+
+/* ============================================================
+   Court cards â€” the signature element.
+   A stylised aerial court: center line, two team slots either
+   side, score in the middle like a live scoreboard.
+   ============================================================ */
+
+.court-card {
+  position: relative;
+  background: var(--court);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  color: var(--chalk);
+  padding: 1.4rem;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 1rem;
+  min-height: 150px;
+}
+
+.court-card::before {
+  /* schematic court lines: outer boundary + service boxes */
+  content: '';
+  position: absolute;
+  inset: 10px;
+  border: 2px solid rgba(243, 241, 231, 0.28);
+  border-radius: 6px;
+  pointer-events: none;
+}
+
+.court-card::after {
+  content: '';
+  position: absolute;
+  top: 10px;
+  bottom: 10px;
+  left: 50%;
+  width: 2px;
+  background: rgba(243, 241, 231, 0.28);
+  pointer-events: none;
+}
+
+.court-card__label {
+  position: absolute;
+  top: 0.9rem;
+  left: 1.4rem;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--volt);
+  z-index: 1;
+}
+
+.court-card__team {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+}
+
+.court-card__team--a { text-align: left; padding-left: 0.4rem; }
+.court-card__team--b { text-align: right; padding-right: 0.4rem; }
+
+.court-card__names {
+  font-weight: 600;
+  font-size: 1.02rem;
+  line-height: 1.3;
+}
+
+.court-card__score {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: clamp(1.8rem, 4vw, 2.6rem);
+}
+
+.court-card__score span.dash {
+  color: var(--slate-light);
+  font-size: 1.4rem;
+}
+
+.court-card__score-input {
+  width: 2.6ch;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: clamp(1.4rem, 3.4vw, 2rem);
+  background: rgba(243, 241, 231, 0.12);
+  border: 1.5px solid rgba(243, 241, 231, 0.35);
+  border-radius: 6px;
+  color: var(--chalk);
+  padding: 0.15em 0.1em;
+}
+
+.court-card__score-input::-webkit-outer-spin-button,
+.court-card__score-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.court-card--done {
+  background: var(--ink-soft);
+}
+
+.court-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.sitout-note {
+  font-size: 0.9rem;
+  color: var(--slate);
+  margin-bottom: 1.5rem;
+}
+
+/* ============================================================
+   Standings table
+   ============================================================ */
+
+.standings {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.standings th, .standings td {
+  text-align: left;
+  padding: 0.65em 0.6em;
+  border-bottom: 1px solid var(--line-dark);
+}
+
+.standings th {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--slate);
+}
+
+.standings td.num, .standings th.num {
+  text-align: right;
+  font-family: var(--font-mono);
+}
+
+.standings tr:first-child td {
+  font-weight: 700;
+}
+
+.standings .rank {
+  font-family: var(--font-mono);
+  color: var(--slate);
+  width: 2ch;
+}
+
+.standings tr:nth-child(1) .rank { color: var(--clay); }
+
+/* ============================================================
+   Viewer / big-screen mode
+   ============================================================ */
+
+.viewer {
+  min-height: 100vh;
+  background: var(--ink);
+  color: var(--chalk);
+}
+
+.viewer .topbar {
+  background: transparent;
+  border-bottom: 1px solid var(--line);
+}
+
+.viewer .wrap {
+  padding-top: 2rem;
+}
+
+.viewer h2 {
+  color: var(--chalk);
+  font-size: 1.1rem;
+  letter-spacing: 0.08em;
+}
+
+.live-dot {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5em;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--volt);
+}
+
+.live-dot::before {
+  content: '';
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--volt);
+  animation: pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.8); }
+}
+
+.viewer .court-card__score-input {
+  display: none; /* viewer is read-only: show plain numbers instead */
+}
+
+.viewer .standings {
+  color: var(--chalk);
+}
+
+.viewer .standings th, .viewer .standings td {
+  border-bottom: 1px solid var(--line);
+}
+
+.viewer .standings th {
+  color: var(--slate-light);
+}
+
+.viewer .empty-state {
+  color: var(--slate-light);
+}
+
+.viewer .empty-state h3 {
+  color: var(--chalk);
+}
+
+.round-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.round-heading h2 {
+  margin: 0;
+}
+
+/* ============================================================
+   Responsive
+   ============================================================ */
+
+@media (max-width: 640px) {
+  .wrap { padding: 1.25rem 1rem 3rem; }
+  .court-card { grid-template-columns: 1fr; text-align: center; gap: 0.6rem; }
+  .court-card__team--a, .court-card__team--b { text-align: center; padding: 0; }
+  .court-card::after { display: none; }
+  .court-card__score { justify-content: center; }
+  .topbar { padding: 1rem; }
+}

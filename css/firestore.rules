@@ -1,0 +1,16 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /tournaments/{tournamentId} {
+      // Anyone can read — this is what powers the public viewer.html
+      // on players' phones and the clubhouse screen.
+      allow read: if true;
+
+      // MVP: anyone who has the write path can write. There's no login
+      // in this version of the app, so this is only as safe as the
+      // admin.html URL being unlisted. See README "Locking this down
+      // later" for how to require Firebase Auth on writes instead.
+      allow write: if true;
+    }
+  }
+}
