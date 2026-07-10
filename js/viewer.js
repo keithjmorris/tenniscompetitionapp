@@ -57,7 +57,7 @@ function render(t, isLive) {
             <div class="court-card__names">${escapeHtml(playerName(players, m.teamA[0]))}<br>${escapeHtml(playerName(players, m.teamA[1]))}</div>
           </div>
           <div class="court-card__score">
-            <span>${m.scoreA ?? '-'}</span><span class="dash">v</span><span>${m.scoreB ?? '-'}</span>
+            <span class="court-card__score-value">${m.scoreA ?? '-'}</span><span class="dash">v</span><span class="court-card__score-value">${m.scoreB ?? '-'}</span>
           </div>
           <div class="court-card__team court-card__team--b">
             <div class="court-card__names">${escapeHtml(playerName(players, m.teamB[0]))}<br>${escapeHtml(playerName(players, m.teamB[1]))}</div>

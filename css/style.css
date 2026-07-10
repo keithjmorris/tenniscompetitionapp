@@ -500,22 +500,24 @@ button {
   font-weight: 600;
 }
 
-.court-card__score-input {
+.court-card__score-input,
+.court-card__score-value {
   width: 2.6ch;
+  display: inline-block;
   text-align: center;
   font-family: var(--font-mono);
   font-weight: 700;
   font-size: clamp(1.4rem, 3.4vw, 2rem);
-  background: rgba(243, 241, 231, 0.12);
-  border: 1.5px solid rgba(243, 241, 231, 0.35);
+  background: var(--chalk);
+  border: 1.5px solid rgba(18, 24, 27, 0.25);
   border-radius: 6px;
-  color: var(--chalk);
+  color: var(--ink);
   padding: 0.15em 0.1em;
 }
 
 .court-card__score-input::-webkit-outer-spin-button,
 .court-card__score-input::-webkit-inner-spin-button {
- -webkit-appearance: none;
+  -webkit-appearance: none;
   margin: 0;
 }
 
@@ -626,10 +628,6 @@ button {
   50% { opacity: 0.4; transform: scale(0.8); }
 }
 
-.viewer .court-card__score-input {
-  display: none; /* viewer is read-only: show plain numbers instead */
-}
-
 .viewer .standings {
   color: var(--chalk);
 }
@@ -672,6 +670,6 @@ button {
   .court-card { padding: 1rem 0.85rem; gap: 0.5rem; }
   .court-card__names { font-size: 0.92rem; }
   .court-card__score { gap: 0.4rem; font-size: 1.5rem; }
-  .court-card__score-input { width: 2.1ch; font-size: 1.3rem; padding: 0.15em 0.05em; }
+  .court-card__score-input, .court-card__score-value { width: 2.1ch; font-size: 1.3rem; padding: 0.15em 0.05em; }
   .topbar { padding: 1rem; }
 }
