@@ -89,9 +89,10 @@ function render(t, isLive) {
       <td>${escapeHtml(s.name)}</td>
       <td class="num">${s.points}</td>
       <td class="num">${s.roundsPlayed}</td>
-      <td class="num">${s.avg}</td>
+      <td class="num">${s.roundsWon}</td>
+      <td class="num">${s.pointDiff > 0 ? '+' : ''}${s.pointDiff}</td>
     </tr>
-  `).join('') || '<tr><td colspan="5" style="text-align:center; color:var(--slate-light);">No scores recorded yet.</td></tr>';
+  `).join('') || '<tr><td colspan="6" style="text-align:center; color:var(--slate-light);">No scores recorded yet.</td></tr>';
 
   contentEl.innerHTML = `
     ${roundHtml}
@@ -99,7 +100,7 @@ function render(t, isLive) {
       <h2>Standings</h2>
       <table class="standings">
         <thead>
-          <tr><th class="rank">#</th><th>Player</th><th class="num">Points</th><th class="num">Rounds</th><th class="num">Avg</th></tr>
+          <tr><th class="rank">#</th><th>Player</th><th class="num">Points</th><th class="num">Rounds</th><th class="num">Won</th><th class="num">PD</th></tr>
         </thead>
         <tbody>${standingsRows}</tbody>
       </table>

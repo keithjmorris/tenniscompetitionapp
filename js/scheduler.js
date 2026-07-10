@@ -204,25 +204,41 @@ export function generateNextRound(players, existingRounds, courts = 2) {
 }
 
 /**
- * Tally cumulative points per player across all completed matches.
- * Returns players sorted by total points desc, then average points per round desc.
+ * Tally cumulative points, rounds played/won, and point differential per
+ * player across all completed matches. "Won" means their team scored more
+ * points than the opposing team in that round; equal scores count as
+ * neither a win nor a loss.
+ * Returns players sorted by total points desc, then point differential desc.
  */
 export function computeStandings(players, rounds) {
-  const totals = {};
-  const played = {};
-  players.forEach(p => { totals[p.id] = 0; played[p.id] = 0; });
+  const totals = {};    // cumulative points scored
+  const conceded = {};  // cumulative points scored against them
+  const played = {};    // rounds played
+  const won = {};        // rounds won
+
+  players.forEach(p => {
+    totals[p.id] = 0;
+    conceded[p.id] = 0;
+    played[p.id] = 0;
+    won[p.id] = 0;
+  });
 
   rounds.forEach(round => {
     round.matches.forEach(match => {
       if (!match.completed) return;
       const { teamA, teamB, scoreA, scoreB } = match;
+
       teamA.forEach(id => {
         totals[id] = (totals[id] || 0) + scoreA;
+        conceded[id] = (conceded[id] || 0) + scoreB;
         played[id] = (played[id] || 0) + 1;
+        if (scoreA > scoreB) won[id] = (won[id] || 0) + 1;
       });
       teamB.forEach(id => {
         totals[id] = (totals[id] || 0) + scoreB;
+        conceded[id] = (conceded[id] || 0) + scoreA;
         played[id] = (played[id] || 0) + 1;
+        if (scoreB > scoreA) won[id] = (won[id] || 0) + 1;
       });
     });
   });
@@ -233,7 +249,8 @@ export function computeStandings(players, rounds) {
       name: p.name,
       points: totals[p.id] || 0,
       roundsPlayed: played[p.id] || 0,
-      avg: played[p.id] ? +(totals[p.id] / played[p.id]).toFixed(2) : 0
+      roundsWon: won[p.id] || 0,
+      pointDiff: (totals[p.id] || 0) - (conceded[p.id] || 0)
     }))
-    .sort((a, b) => b.points - a.points || b.avg - a.avg || a.name.localeCompare(b.name));
+    .sort((a, b) => b.points - a.points || b.pointDiff - a.pointDiff || a.name.localeCompare(b.name));
 }

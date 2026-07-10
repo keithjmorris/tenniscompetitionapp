@@ -300,12 +300,13 @@ function renderStandingsInto(tbodyId) {
       <td>${escapeHtml(s.name)}</td>
       <td class="num">${s.points}</td>
       <td class="num">${s.roundsPlayed}</td>
-      <td class="num">${s.avg}</td>
+      <td class="num">${s.roundsWon}</td>
+      <td class="num">${s.pointDiff > 0 ? '+' : ''}${s.pointDiff}</td>
     `;
     body.appendChild(tr);
   });
   if (standings.length === 0) {
-    body.innerHTML = '<tr><td colspan="5" style="color:var(--slate); text-align:center;">No scores recorded yet.</td></tr>';
+    body.innerHTML = '<tr><td colspan="6" style="color:var(--slate); text-align:center;">No scores recorded yet.</td></tr>';
   }
 }
 
