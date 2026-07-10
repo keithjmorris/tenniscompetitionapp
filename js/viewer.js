@@ -19,7 +19,7 @@ onSnapshot(query(tournamentsCol, orderBy('createdAt', 'desc'), limit(10)), snap 
 
 function playerName(players, id) {
   const p = players.find(pl => pl.id === id);
-  return p ? p.name : 'â€”';
+  return p ? p.name : ' - ';
 }
 
 function render(t, isLive) {
@@ -28,7 +28,7 @@ function render(t, isLive) {
     statusEl.style.display = 'none';
     contentEl.innerHTML = `
       <div class="empty-state">
-        <h3>Waiting for a tournamentâ€¦</h3>
+        <h3>Waiting for a tournament...</h3>
         <p>Nothing is currently in progress. Check back once the organiser starts one.</p>
       </div>`;
     return;
@@ -52,12 +52,12 @@ function render(t, isLive) {
         : '';
       const cardsHtml = round.matches.map(m => `
         <div class="court-card${m.completed ? ' court-card--done' : ''}">
-          <div class="court-card__label">Court ${m.court}${m.completed ? ' Â· Recorded' : ' Â· Playing'}</div>
+          <div class="court-card__label">Court ${m.court}${m.completed ? ' - Recorded' : ' - Playing'}</div>
           <div class="court-card__team court-card__team--a">
             <div class="court-card__names">${escapeHtml(playerName(players, m.teamA[0]))}<br>${escapeHtml(playerName(players, m.teamA[1]))}</div>
           </div>
           <div class="court-card__score">
-            <span>${m.scoreA ?? 'â€“'}</span><span class="dash">â€“</span><span>${m.scoreB ?? 'â€“'}</span>
+            <span>${m.scoreA ?? '-'}</span><span class="dash">v</span><span>${m.scoreB ?? '-'}</span>
           </div>
           <div class="court-card__team court-card__team--b">
             <div class="court-card__names">${escapeHtml(playerName(players, m.teamB[0]))}<br>${escapeHtml(playerName(players, m.teamB[1]))}</div>

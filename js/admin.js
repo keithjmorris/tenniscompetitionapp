@@ -5,13 +5,13 @@ import {
 } from './firebase-init.js';
 import { generateNextRound, computeStandings } from './scheduler.js';
 
-// ---------------------------------------------------------------
-// Optional lightweight PIN gate. This is NOT real security â€” it just
+// -------------------------------------------------------------- - 
+// Optional lightweight PIN gate. This is NOT real security - it just
 // keeps casual visitors from poking at the admin page. Set a PIN below
 // to enable it, or leave as null to skip the gate entirely. For real
 // protection (e.g. a public repo / public URL you don't trust), add
 // Firebase Authentication instead.
-// ---------------------------------------------------------------
+// -------------------------------------------------------------- - 
 const ADMIN_PIN = null; // e.g. '2468'
 
 function checkPin() {
@@ -30,9 +30,9 @@ if (!checkPin()) {
   throw new Error('PIN check failed');
 }
 
-// ---------------------------------------------------------------
+// -------------------------------------------------------------- - 
 // State
-// ---------------------------------------------------------------
+// -------------------------------------------------------------- - 
 const tournamentsCol = collection(db, 'tournaments');
 let currentId = null;
 let currentData = null;
@@ -57,14 +57,14 @@ function stopWatchingCurrent() {
   currentData = null;
 }
 
-// ---------------------------------------------------------------
+// -------------------------------------------------------------- - 
 // Tournament list
-// ---------------------------------------------------------------
+// -------------------------------------------------------------- - 
 const listEl = document.getElementById('tournament-list');
 
 onSnapshot(query(tournamentsCol, orderBy('createdAt', 'desc'), limit(25)), snap => {
   if (snap.empty) {
-    listEl.innerHTML = '<div class="empty-state"><p>No tournaments yet â€” create one above.</p></div>';
+    listEl.innerHTML = '<div class="empty-state"><p>No tournaments yet - create one above.</p></div>';
     return;
   }
   listEl.innerHTML = '';
@@ -77,7 +77,7 @@ onSnapshot(query(tournamentsCol, orderBy('createdAt', 'desc'), limit(25)), snap 
       <div class="tourn-row__meta">
         <span class="tourn-row__name">${escapeHtml(t.name)}</span>
         <span class="tag ${statusTag}">${t.status}</span>
-        <span style="color:var(--slate); font-size:0.85rem;">${(t.players || []).length} players Â· ${t.pointsPerRound} pts</span>
+        <span style="color:var(--slate); font-size:0.85rem;">${(t.players || []).length} players - ${t.pointsPerRound} pts</span>
       </div>
       <div style="display:flex; gap:0.5rem;">
         <button class="btn btn--small btn--primary" data-open="${d.id}">Open</button>
@@ -91,9 +91,9 @@ onSnapshot(query(tournamentsCol, orderBy('createdAt', 'desc'), limit(25)), snap 
   });
 });
 
-// ---------------------------------------------------------------
+// -------------------------------------------------------------- - 
 // Create tournament
-// ---------------------------------------------------------------
+// -------------------------------------------------------------- - 
 document.getElementById('form-new-tournament').addEventListener('submit', async e => {
   e.preventDefault();
   const name = document.getElementById('new-name').value.trim();
@@ -116,9 +116,9 @@ document.getElementById('form-new-tournament').addEventListener('submit', async 
   openTournament(docRef.id);
 });
 
-// ---------------------------------------------------------------
+// -------------------------------------------------------------- - 
 // Open / watch a specific tournament
-// ---------------------------------------------------------------
+// -------------------------------------------------------------- - 
 function openTournament(id) {
   stopWatchingCurrent();
   currentId = id;
@@ -135,9 +135,9 @@ function saveCurrent(patch) {
   return updateDoc(doc(db, 'tournaments', currentId), patch);
 }
 
-// ---------------------------------------------------------------
+// -------------------------------------------------------------- - 
 // Render router
-// ---------------------------------------------------------------
+// -------------------------------------------------------------- - 
 function render() {
   if (!currentData) return;
   if (currentData.status === 'setup') { renderSetup(); showScreen('setup'); }
@@ -145,9 +145,9 @@ function render() {
   else if (currentData.status === 'completed') { renderDone(); showScreen('done'); }
 }
 
-// ---------------------------------------------------------------
+// -------------------------------------------------------------- - 
 // SETUP screen
-// ---------------------------------------------------------------
+// -------------------------------------------------------------- - 
 document.getElementById('form-add-player').addEventListener('submit', e => {
   e.preventDefault();
   const input = document.getElementById('player-name');
@@ -198,9 +198,9 @@ function renderSetup() {
   startBtn.disabled = players.length < 4;
 }
 
-// ---------------------------------------------------------------
+// -------------------------------------------------------------- - 
 // LIVE screen
-// ---------------------------------------------------------------
+// -------------------------------------------------------------- - 
 document.getElementById('btn-generate-round').addEventListener('click', () => {
   if (!currentData) return;
   try {
@@ -219,14 +219,24 @@ document.getElementById('btn-finish-tournament').addEventListener('click', () =>
 
 function playerName(id) {
   const p = (currentData.players || []).find(pl => pl.id === id);
-  return p ? p.name : 'â€”';
+  return p ? p.name : ' - ';
 }
 
 function updateMatchScore(roundIndex, matchIndex, field, value) {
   const rounds = JSON.parse(JSON.stringify(currentData.rounds || []));
   const match = rounds[roundIndex].matches[matchIndex];
+  const target = currentData.pointsPerRound;
   const n = value === '' ? null : Math.max(0, parseInt(value, 10) || 0);
   match[field] = n;
+
+  // Auto-fill the other team's score so the pair sums to the round's points
+  // target (e.g. entering 13 out of 24 sets the other team to 11). The
+  // organiser can still overwrite either box manually afterwards.
+  if (n !== null && target) {
+    const otherField = field === 'scoreA' ? 'scoreB' : 'scoreA';
+    match[otherField] = Math.max(0, target - n);
+  }
+
   match.completed = match.scoreA !== null && match.scoreB !== null;
   saveCurrent({ rounds });
 }
@@ -256,13 +266,13 @@ function renderLive() {
       const card = document.createElement('div');
       card.className = 'court-card' + (m.completed ? ' court-card--done' : '');
       card.innerHTML = `
-        <div class="court-card__label">Court ${m.court}${m.completed ? ' Â· Recorded' : ' Â· Live'}</div>
+        <div class="court-card__label">Court ${m.court}${m.completed ? ' - Recorded' : ' - Live'}</div>
         <div class="court-card__team court-card__team--a">
           <div class="court-card__names">${escapeHtml(playerName(m.teamA[0]))}<br>${escapeHtml(playerName(m.teamA[1]))}</div>
         </div>
         <div class="court-card__score">
           <input type="number" min="0" class="court-card__score-input" data-team="A" value="${m.scoreA ?? ''}" aria-label="Team A score">
-          <span class="dash">â€“</span>
+          <span class="dash">v</span>
           <input type="number" min="0" class="court-card__score-input" data-team="B" value="${m.scoreB ?? ''}" aria-label="Team B score">
         </div>
         <div class="court-card__team court-card__team--b">
@@ -310,9 +320,9 @@ function renderStandingsInto(tbodyId) {
   }
 }
 
-// ---------------------------------------------------------------
+// -------------------------------------------------------------- - 
 // DONE screen
-// ---------------------------------------------------------------
+// -------------------------------------------------------------- - 
 document.getElementById('btn-done-back').addEventListener('click', () => {
   stopWatchingCurrent();
   showScreen('list');
@@ -323,14 +333,14 @@ function renderDone() {
   const standings = computeStandings(currentData.players || [], currentData.rounds || []);
   const winner = standings[0];
   document.getElementById('done-winner').textContent = winner
-    ? `ðŸ† ${winner.name} â€” ${winner.points} points`
+    ? `ðŸ† ${winner.name} - ${winner.points} points`
     : 'No scores were recorded.';
   renderStandingsInto('done-standings-body');
 }
 
-// ---------------------------------------------------------------
+// -------------------------------------------------------------- - 
 // Utils
-// ---------------------------------------------------------------
+// -------------------------------------------------------------- - 
 function escapeHtml(str) {
   const div = document.createElement('div');
   div.textContent = str;
