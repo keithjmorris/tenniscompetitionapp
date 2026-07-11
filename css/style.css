@@ -369,16 +369,89 @@ button {
   background: none;
   border: none;
   cursor: pointer;
-  color: var(--clay);
   font-size: 1rem;
   line-height: 1;
   padding: 0.2em 0.4em;
   border-radius: 50%;
 }
 
-.chip button:hover {
+.chip__remove {
+  color: var(--clay);
+}
+
+.chip__remove:hover {
   background: var(--clay);
   color: #fff;
+}
+
+.chip__edit {
+  color: var(--slate);
+  font-family: var(--font-body);
+  font-size: 0.72rem !important;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-radius: 100px !important;
+  padding: 0.2em 0.6em !important;
+}
+
+.chip__edit:hover {
+  background: var(--court);
+  color: #fff;
+}
+
+/* Collapsible sections (previous rounds, player edit list) */
+details.card summary,
+.collapsible summary {
+  cursor: pointer;
+  font-family: var(--font-display);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+  font-size: 1.3rem;
+  list-style: none;
+}
+
+details.card summary::-webkit-details-marker {
+  display: none;
+}
+
+details.card summary::before {
+  content: '+ ';
+  color: var(--court);
+}
+
+details.card[open] summary::before {
+  content: '- ';
+}
+
+.collapsible {
+  border: 1px solid var(--line-dark);
+  border-radius: var(--radius-lg);
+  padding: 1rem 1.5rem;
+  margin-bottom: 1rem;
+  background: #fff;
+}
+
+.collapsible summary {
+  padding: 0.4rem 0;
+}
+
+.collapsible summary::-webkit-details-marker {
+  display: none;
+}
+
+.collapsible summary::before {
+  content: '+ ';
+  color: var(--court);
+  font-family: var(--font-display);
+}
+
+.collapsible[open] summary::before {
+  content: '- ';
+}
+
+.collapsible .round-heading {
+  margin: 1rem 0 0.75rem;
 }
 
 /* Tournament list */

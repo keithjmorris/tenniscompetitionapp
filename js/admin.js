@@ -5,13 +5,13 @@ import {
 } from './firebase-init.js';
 import { generateNextRound, computeStandings } from './scheduler.js';
 
-// -------------------------------------------------------------- - 
+// ---------------------------------------------------------------
 // Optional lightweight PIN gate. This is NOT real security - it just
 // keeps casual visitors from poking at the admin page. Set a PIN below
 // to enable it, or leave as null to skip the gate entirely. For real
 // protection (e.g. a public repo / public URL you don't trust), add
 // Firebase Authentication instead.
-// -------------------------------------------------------------- - 
+// ---------------------------------------------------------------
 const ADMIN_PIN = null; // e.g. '2468'
 
 function checkPin() {
@@ -30,9 +30,9 @@ if (!checkPin()) {
   throw new Error('PIN check failed');
 }
 
-// -------------------------------------------------------------- - 
+// ---------------------------------------------------------------
 // State
-// -------------------------------------------------------------- - 
+// ---------------------------------------------------------------
 const tournamentsCol = collection(db, 'tournaments');
 let currentId = null;
 let currentData = null;
@@ -57,9 +57,9 @@ function stopWatchingCurrent() {
   currentData = null;
 }
 
-// -------------------------------------------------------------- - 
+// ---------------------------------------------------------------
 // Tournament list
-// -------------------------------------------------------------- - 
+// ---------------------------------------------------------------
 const listEl = document.getElementById('tournament-list');
 
 onSnapshot(query(tournamentsCol, orderBy('createdAt', 'desc'), limit(25)), snap => {
@@ -89,11 +89,14 @@ onSnapshot(query(tournamentsCol, orderBy('createdAt', 'desc'), limit(25)), snap 
   listEl.querySelectorAll('[data-open]').forEach(btn => {
     btn.addEventListener('click', () => openTournament(btn.getAttribute('data-open')));
   });
+}, err => {
+  console.error('Tournament list failed to load:', err);
+  listEl.innerHTML = `<div class="empty-state"><h3>Couldn't load tournaments</h3><p>${escapeHtml(err.message)}</p></div>`;
 });
 
-// -------------------------------------------------------------- - 
+// ---------------------------------------------------------------
 // Create tournament
-// -------------------------------------------------------------- - 
+// ---------------------------------------------------------------
 document.getElementById('form-new-tournament').addEventListener('submit', async e => {
   e.preventDefault();
   const name = document.getElementById('new-name').value.trim();
@@ -116,18 +119,34 @@ document.getElementById('form-new-tournament').addEventListener('submit', async 
   openTournament(docRef.id);
 });
 
-// -------------------------------------------------------------- - 
+// ---------------------------------------------------------------
 // Open / watch a specific tournament
-// -------------------------------------------------------------- - 
+// ---------------------------------------------------------------
 function openTournament(id) {
   stopWatchingCurrent();
   currentId = id;
+  const url = new URL(window.location);
+  url.searchParams.set('t', id);
+  window.history.replaceState({}, '', url);
+
   const ref = doc(db, 'tournaments', id);
   unsubCurrent = onSnapshot(ref, snap => {
-    if (!snap.exists()) { showScreen('list'); return; }
+    if (!snap.exists()) { backToList(); return; }
     currentData = snap.data();
     render();
+  }, err => {
+    console.error('Failed to load tournament:', err);
+    alert(`Couldn't load that tournament: ${err.message}`);
+    backToList();
   });
+}
+
+function backToList() {
+  stopWatchingCurrent();
+  const url = new URL(window.location);
+  url.searchParams.delete('t');
+  window.history.replaceState({}, '', url);
+  showScreen('list');
 }
 
 function saveCurrent(patch) {
@@ -135,9 +154,9 @@ function saveCurrent(patch) {
   return updateDoc(doc(db, 'tournaments', currentId), patch);
 }
 
-// -------------------------------------------------------------- - 
+// ---------------------------------------------------------------
 // Render router
-// -------------------------------------------------------------- - 
+// ---------------------------------------------------------------
 function render() {
   if (!currentData) return;
   if (currentData.status === 'setup') { renderSetup(); showScreen('setup'); }
@@ -145,9 +164,9 @@ function render() {
   else if (currentData.status === 'completed') { renderDone(); showScreen('done'); }
 }
 
-// -------------------------------------------------------------- - 
+// ---------------------------------------------------------------
 // SETUP screen
-// -------------------------------------------------------------- - 
+// ---------------------------------------------------------------
 document.getElementById('form-add-player').addEventListener('submit', e => {
   e.preventDefault();
   const input = document.getElementById('player-name');
@@ -164,10 +183,41 @@ function removePlayer(id) {
   saveCurrent({ players });
 }
 
-document.getElementById('btn-back-to-list').addEventListener('click', () => {
-  stopWatchingCurrent();
-  showScreen('list');
-});
+function renamePlayer(id) {
+  const player = (currentData.players || []).find(p => p.id === id);
+  if (!player) return;
+  const next = prompt('Player name:', player.name);
+  if (next === null) return; // cancelled
+  const trimmed = next.trim();
+  if (!trimmed) return;
+  const players = (currentData.players || []).map(p => p.id === id ? { ...p, name: trimmed } : p);
+  saveCurrent({ players });
+}
+
+function renderPlayerChips(container, { allowRemove }) {
+  const players = currentData.players || [];
+  container.innerHTML = '';
+  if (players.length === 0) {
+    container.innerHTML = '<span style="color:var(--slate);">No players added yet.</span>';
+    return;
+  }
+  players.forEach(p => {
+    const chip = document.createElement('span');
+    chip.className = 'chip';
+    chip.innerHTML = `
+      ${escapeHtml(p.name)}
+      <button type="button" class="chip__edit" aria-label="Rename ${escapeHtml(p.name)}">Edit</button>
+      ${allowRemove ? `<button type="button" class="chip__remove" aria-label="Remove ${escapeHtml(p.name)}">&times;</button>` : ''}
+    `;
+    chip.querySelector('.chip__edit').addEventListener('click', () => renamePlayer(p.id));
+    if (allowRemove) {
+      chip.querySelector('.chip__remove').addEventListener('click', () => removePlayer(p.id));
+    }
+    container.appendChild(chip);
+  });
+}
+
+document.getElementById('btn-back-to-list').addEventListener('click', backToList);
 
 document.getElementById('btn-start-tournament').addEventListener('click', () => {
   if (!currentData || (currentData.players || []).length < 4) return;
@@ -178,18 +228,7 @@ function renderSetup() {
   document.getElementById('setup-title').textContent = currentData.name;
   const players = currentData.players || [];
 
-  const chipsEl = document.getElementById('player-chips');
-  chipsEl.innerHTML = '';
-  if (players.length === 0) {
-    chipsEl.innerHTML = '<span style="color:var(--slate);">No players added yet.</span>';
-  }
-  players.forEach(p => {
-    const chip = document.createElement('span');
-    chip.className = 'chip';
-    chip.innerHTML = `${escapeHtml(p.name)} <button type="button" aria-label="Remove ${escapeHtml(p.name)}">&times;</button>`;
-    chip.querySelector('button').addEventListener('click', () => removePlayer(p.id));
-    chipsEl.appendChild(chip);
-  });
+  renderPlayerChips(document.getElementById('player-chips'), { allowRemove: true });
 
   document.getElementById('player-count-label').textContent =
     `${players.length} player${players.length === 1 ? '' : 's'} added`;
@@ -198,9 +237,9 @@ function renderSetup() {
   startBtn.disabled = players.length < 4;
 }
 
-// -------------------------------------------------------------- - 
+// ---------------------------------------------------------------
 // LIVE screen
-// -------------------------------------------------------------- - 
+// ---------------------------------------------------------------
 document.getElementById('btn-generate-round').addEventListener('click', () => {
   if (!currentData) return;
   try {
@@ -241,6 +280,33 @@ function updateMatchScore(roundIndex, matchIndex, field, value) {
   saveCurrent({ rounds });
 }
 
+function buildMatchCard(round, roundIndex, matchIndex) {
+  const m = round.matches[matchIndex];
+  const card = document.createElement('div');
+  card.className = 'court-card' + (m.completed ? ' court-card--done' : '');
+  card.innerHTML = `
+    <div class="court-card__label">Court ${m.court}${m.completed ? ' - Recorded' : ' - Live'}</div>
+    <div class="court-card__team court-card__team--a">
+      <div class="court-card__names">${escapeHtml(playerName(m.teamA[0]))}<br>${escapeHtml(playerName(m.teamA[1]))}</div>
+    </div>
+    <div class="court-card__score">
+      <input type="number" min="0" class="court-card__score-input" data-team="A" value="${m.scoreA ?? ''}" aria-label="Team A score">
+      <span class="dash">v</span>
+      <input type="number" min="0" class="court-card__score-input" data-team="B" value="${m.scoreB ?? ''}" aria-label="Team B score">
+    </div>
+    <div class="court-card__team court-card__team--b">
+      <div class="court-card__names">${escapeHtml(playerName(m.teamB[0]))}<br>${escapeHtml(playerName(m.teamB[1]))}</div>
+    </div>
+  `;
+  card.querySelectorAll('input').forEach(inp => {
+    inp.addEventListener('change', () => {
+      const field = inp.getAttribute('data-team') === 'A' ? 'scoreA' : 'scoreB';
+      updateMatchScore(roundIndex, matchIndex, field, inp.value);
+    });
+  });
+  return card;
+}
+
 function renderLive() {
   const rounds = currentData.rounds || [];
   const roundIndex = rounds.length - 1;
@@ -263,29 +329,7 @@ function renderLive() {
     cardsEl.innerHTML = '<div class="empty-state"><h3>Ready to begin</h3><p>Click "Generate next round" to create the first set of matches.</p></div>';
   } else {
     round.matches.forEach((m, mi) => {
-      const card = document.createElement('div');
-      card.className = 'court-card' + (m.completed ? ' court-card--done' : '');
-      card.innerHTML = `
-        <div class="court-card__label">Court ${m.court}${m.completed ? ' - Recorded' : ' - Live'}</div>
-        <div class="court-card__team court-card__team--a">
-          <div class="court-card__names">${escapeHtml(playerName(m.teamA[0]))}<br>${escapeHtml(playerName(m.teamA[1]))}</div>
-        </div>
-        <div class="court-card__score">
-          <input type="number" min="0" class="court-card__score-input" data-team="A" value="${m.scoreA ?? ''}" aria-label="Team A score">
-          <span class="dash">v</span>
-          <input type="number" min="0" class="court-card__score-input" data-team="B" value="${m.scoreB ?? ''}" aria-label="Team B score">
-        </div>
-        <div class="court-card__team court-card__team--b">
-          <div class="court-card__names">${escapeHtml(playerName(m.teamB[0]))}<br>${escapeHtml(playerName(m.teamB[1]))}</div>
-        </div>
-      `;
-      card.querySelectorAll('input').forEach(inp => {
-        inp.addEventListener('change', () => {
-          const field = inp.getAttribute('data-team') === 'A' ? 'scoreA' : 'scoreB';
-          updateMatchScore(roundIndex, mi, field, inp.value);
-        });
-      });
-      cardsEl.appendChild(card);
+      cardsEl.appendChild(buildMatchCard(round, roundIndex, mi));
     });
   }
 
@@ -296,7 +340,43 @@ function renderLive() {
     hint.textContent = '';
   }
 
+  renderPreviousRounds(rounds, roundIndex);
+  renderPlayerChips(document.getElementById('live-player-chips'), { allowRemove: false });
   renderStandingsInto('live-standings-body');
+}
+
+function renderPreviousRounds(rounds, currentRoundIndex) {
+  const container = document.getElementById('live-previous-rounds');
+  container.innerHTML = '';
+  const previous = rounds.slice(0, currentRoundIndex); // everything before the current round
+  if (previous.length === 0) return;
+
+  const details = document.createElement('details');
+  details.className = 'collapsible';
+  const summary = document.createElement('summary');
+  summary.textContent = `Previous rounds (${previous.length})`;
+  details.appendChild(summary);
+
+  // Most recent previous round first.
+  for (let i = previous.length - 1; i >= 0; i--) {
+    const round = previous[i];
+    const heading = document.createElement('div');
+    heading.className = 'round-heading';
+    heading.innerHTML = `<h2 style="font-size:1.1rem;">Round ${round.roundNumber}</h2>`;
+    if (round.sitOut.length) {
+      heading.innerHTML += `<span class="sitout-note" style="margin:0;">Sat out: ${round.sitOut.map(playerName).map(escapeHtml).join(', ')}</span>`;
+    }
+    details.appendChild(heading);
+
+    const cardsWrap = document.createElement('div');
+    cardsWrap.className = 'court-cards';
+    round.matches.forEach((m, mi) => {
+      cardsWrap.appendChild(buildMatchCard(round, i, mi));
+    });
+    details.appendChild(cardsWrap);
+  }
+
+  container.appendChild(details);
 }
 
 function renderStandingsInto(tbodyId) {
@@ -320,13 +400,10 @@ function renderStandingsInto(tbodyId) {
   }
 }
 
-// -------------------------------------------------------------- - 
+// ---------------------------------------------------------------
 // DONE screen
-// -------------------------------------------------------------- - 
-document.getElementById('btn-done-back').addEventListener('click', () => {
-  stopWatchingCurrent();
-  showScreen('list');
-});
+// ---------------------------------------------------------------
+document.getElementById('btn-done-back').addEventListener('click', backToList);
 
 function renderDone() {
   document.getElementById('done-title').textContent = currentData.name;
@@ -338,13 +415,48 @@ function renderDone() {
   renderStandingsInto('done-standings-body');
 }
 
-// -------------------------------------------------------------- - 
+// ---------------------------------------------------------------
 // Utils
-// -------------------------------------------------------------- - 
+// ---------------------------------------------------------------
 function escapeHtml(str) {
   const div = document.createElement('div');
   div.textContent = str;
   return div.innerHTML;
 }
 
-showScreen('list');
+// ---------------------------------------------------------------
+// Boot: resume the tournament from the URL (?t=<id>), or fall back
+// to auto-resuming whichever recent tournament is still in setup or
+// active, so a refresh, reopened tab, or accidentally closed browser
+// doesn't strand the organiser on the list screen mid-event.
+// ---------------------------------------------------------------
+function boot() {
+  const urlId = new URL(window.location).searchParams.get('t');
+  if (urlId) {
+    openTournament(urlId);
+    return;
+  }
+
+  let unsubBoot = null;
+  let handled = false;
+  unsubBoot = onSnapshot(query(tournamentsCol, orderBy('createdAt', 'desc'), limit(10)), snap => {
+    if (handled) return;
+    handled = true;
+    if (unsubBoot) unsubBoot();
+
+    const inProgress = snap.docs.find(d => {
+      const status = d.data().status;
+      return status === 'setup' || status === 'active';
+    });
+    if (inProgress) {
+      openTournament(inProgress.id);
+    } else {
+      showScreen('list');
+    }
+  }, err => {
+    console.error('Boot query failed:', err);
+    showScreen('list');
+  });
+}
+
+boot();

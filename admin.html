@@ -17,7 +17,7 @@
 
   <div class="wrap">
 
-    <!- - SCREEN: browse / create tournaments -->
+    <!-- SCREEN: browse / create tournaments -->
     <section id="screen-list">
       <div class="card">
         <h2>Start a new tournament</h2>
@@ -54,7 +54,7 @@
       </div>
     </section>
 
-    <!- - SCREEN: setup (add players before starting) -->
+    <!-- SCREEN: setup (add players before starting) -->
     <section id="screen-setup" style="display:none;">
       <div class="card">
         <h2 id="setup-title">Set up players</h2>
@@ -80,7 +80,7 @@
       </div>
     </section>
 
-    <!- - SCREEN: active tournament -->
+    <!-- SCREEN: active tournament -->
     <section id="screen-live" style="display:none;">
       <div class="round-heading">
         <h2 id="live-round-title">Round 1</h2>
@@ -95,6 +95,14 @@
         <span id="live-round-hint" style="color:var(--slate); margin-left:0.75rem; font-size:0.9rem;"></span>
       </div>
 
+      <div id="live-previous-rounds"></div>
+
+      <details class="card">
+        <summary>Players &amp; scoring corrections</summary>
+        <p style="color:var(--slate); font-size:0.9rem; margin-top:0.75rem;">Fix a typo in a name below - it updates everywhere, including past rounds.</p>
+        <div id="live-player-chips" class="chip-list"></div>
+      </details>
+
       <div class="card">
         <h2>Standings</h2>
         <table class="standings">
@@ -106,7 +114,7 @@
       </div>
     </section>
 
-    <!- - SCREEN: completed tournament -->
+    <!-- SCREEN: completed tournament -->
     <section id="screen-done" style="display:none;">
       <div class="card" style="text-align:center;">
         <div class="landing__eyebrow" style="color:var(--clay);">Final result</div>
