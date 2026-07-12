@@ -16,8 +16,7 @@ Both pages read/write the same Firestore document in real time, so scores
 entered in `admin.html` appear on `viewer.html` within a second or two on
 every connected device.
 
--- - 
-
+---
 ## 1. Local development (VS Code)
 
 Because the app uses ES modules (`<script type="module">`), you can't just
@@ -47,8 +46,7 @@ make the admin URL public).
 You don't need to create the `tournaments` collection by hand - the app
 creates it the first time you make a tournament.
 
--- - 
-
+---
 ## 2. GitHub
 
 Standard flow:
@@ -64,8 +62,7 @@ git push -u origin main
 `js/firebase-config.js` won't be included (it's gitignored) - that's
 intentional.
 
--- - 
-
+---
 ## 3. Vercel
 
 This is a static site with one small build step: `build-config.js` writes
@@ -91,8 +88,7 @@ Once deployed you'll have something like:
  - `https://your-app.vercel.app/viewer.html` - put this on a QR code / the
   clubhouse screen.
 
--- - 
-
+---
 ## 4. Using it on the day
 
 1. Open `admin.html`, create a tournament, add players (minimum 4).
@@ -107,8 +103,13 @@ Once deployed you'll have something like:
    of time, then click **Finish tournament** to lock in the final standings.
 5. `viewer.html` mirrors all of this automatically - nothing to do there.
 
--- - 
+**Refreshing or reopening `admin.html`** takes you straight back to whichever
+tournament is still in setup or in progress - all data is saved to Firestore
+as you go, so nothing is lost if the browser is closed, refreshed, or
+crashes. Only one tournament is ever "in progress" at a time; once you click
+Finish, `admin.html` opens back on the tournament list on next load.
 
+---
 ## How the round scheduling works
 
 Every round, the app:
@@ -126,8 +127,7 @@ This logic lives entirely in `js/scheduler.js`, with no Firebase or DOM
 dependency - worth a read if you want to see (or change) the algorithm
 itself, e.g. to add other formats like Mexicano later.
 
--- - 
-
+---
 ## Locking this down later
 
 Right now there's no login - `admin.html` is only as protected as the URL
@@ -143,8 +143,7 @@ being unlisted (you can optionally set an `ADMIN_PIN` constant at the top of
 `viewer.html` should stay open-read regardless, since that's the whole
 point of the public screen.
 
--- - 
-
+---
 ## Project structure
 
 ```
@@ -156,10 +155,21 @@ js/scheduler.js           Americano round-generation engine (pure JS)
 js/admin.js                Admin page logic + Firestore writes
 js/viewer.js                 Viewer page logic + Firestore reads
 js/firebase-init.js            Firebase/Firestore setup (shared)
+js/add-to-home.js                "Add to Home Screen" prompt (admin + viewer)
 js/firebase-config.example.js    Template - copy to firebase-config.js locally
 build-config.js                   Generates firebase-config.js on Vercel from env vars
 firestore.rules                     Suggested security rules
 ```
+
+## App icon
+
+To give Court Sheet a proper icon (for the browser tab, and for "Add to
+Home Screen" on both iOS and Android), export a 512x512 PNG and save it at
+the project root as `tennistournament.png` - right next to `index.html`,
+`admin.html`, etc. That's the only step needed; `admin.html`, `viewer.html`,
+`index.html`, and the two manifest files already reference it by that exact
+filename. No code changes required once the file is in place - just
+add/commit/push it like any other file.
 
 ## What's not built yet
 

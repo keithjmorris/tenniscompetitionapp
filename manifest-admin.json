@@ -1,0 +1,12 @@
+{
+  "name": "Court Sheet - Admin",
+  "short_name": "CS Admin",
+  "start_url": "admin.html",
+  "scope": ".",
+  "display": "standalone",
+  "background_color": "#f3f1e7",
+  "theme_color": "#12181b",
+  "icons": [
+    { "src": "tennistournament.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}

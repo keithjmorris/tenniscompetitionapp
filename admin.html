@@ -5,6 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Admin - Court Sheet</title>
 <link rel="stylesheet" href="css/style.css">
+<link rel="icon" type="image/png" href="tennistournament.png">
+<link rel="apple-touch-icon" href="tennistournament.png">
+<link rel="manifest" href="manifest-admin.json">
+<meta name="theme-color" content="#12181b">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Court Sheet Admin">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 </head>
 <body>
   <div class="topbar">
@@ -12,7 +19,9 @@
       <h1>Court&nbsp;Sheet</h1>
       <span>Admin</span>
     </div>
-    <div id="topbar-actions"></div>
+    <div id="topbar-actions">
+      <button id="btn-topbar-back" class="btn btn--ghost btn--small" style="display:none; border-color:var(--chalk); color:var(--chalk);">All Tournaments</button>
+    </div>
   </div>
 
   <div class="wrap">
@@ -29,11 +38,17 @@
           <div class="field">
             <label for="new-points">Points per round</label>
             <select id="new-points">
-              <option value="24" selected>24</option>
-              <option value="32">32</option>
-              <option value="21">21</option>
-              <option value="16">16</option>
+              <option value="8">8</option>
+              <option value="12">12</option>
+              <option value="16" selected>16</option>
+              <option value="20">20</option>
+              <option value="24">24</option>
+              <option value="other">Other...</option>
             </select>
+          </div>
+          <div class="field" id="new-points-custom-field" style="display:none;">
+            <label for="new-points-custom">Custom points</label>
+            <input id="new-points-custom" type="number" min="1" step="1" placeholder="e.g. 18">
           </div>
           <div class="field">
             <label for="new-courts">Courts</label>

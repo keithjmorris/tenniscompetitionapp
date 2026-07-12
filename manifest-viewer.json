@@ -1,0 +1,12 @@
+{
+  "name": "Court Sheet - Live",
+  "short_name": "CS Live",
+  "start_url": "viewer.html",
+  "scope": ".",
+  "display": "standalone",
+  "background_color": "#12181b",
+  "theme_color": "#12181b",
+  "icons": [
+    { "src": "tennistournament.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}

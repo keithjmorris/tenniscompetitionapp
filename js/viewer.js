@@ -1,6 +1,6 @@
 // viewer.js
 import { db, collection, onSnapshot, query, orderBy, limit } from './firebase-init.js';
-import { computeStandings } from './scheduler.js';
+import { computeStandings, getTournamentWinners } from './scheduler.js';
 
 const tournamentsCol = collection(db, 'tournaments');
 const nameEl = document.getElementById('viewer-tournament-name');
@@ -74,11 +74,20 @@ function render(t, isLive) {
       roundHtml = `<div class="empty-state"><h3>About to begin</h3><p>The organiser is setting up the first round.</p></div>`;
     }
   } else {
-    const winner = standings[0];
+    const winners = getTournamentWinners(standings);
+    let title = 'Tournament complete';
+    let subtitle = '';
+    if (winners.length === 1) {
+      title = escapeHtml(winners[0].name);
+      subtitle = `Winner - ${winners[0].points} points`;
+    } else if (winners.length > 1) {
+      title = winners.map(w => escapeHtml(w.name)).join(' & ');
+      subtitle = `Joint winners - ${winners[0].points} points each`;
+    }
     roundHtml = `
       <div class="empty-state" style="padding-top:0.5rem;">
-        <h3>${winner ? `🏆 ${escapeHtml(winner.name)}` : 'Tournament complete'}</h3>
-        <p>${winner ? `Won with ${winner.points} points` : ''}</p>
+        <h3>${title}</h3>
+        <p>${subtitle}</p>
       </div>
     `;
   }

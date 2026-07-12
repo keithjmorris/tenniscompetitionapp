@@ -3,7 +3,7 @@ import {
   db, collection, doc, addDoc, updateDoc, onSnapshot,
   query, orderBy, limit, serverTimestamp
 } from './firebase-init.js';
-import { generateNextRound, computeStandings } from './scheduler.js';
+import { generateNextRound, computeStandings, getTournamentWinners } from './scheduler.js';
 
 // ---------------------------------------------------------------
 // Optional lightweight PIN gate. This is NOT real security - it just
@@ -49,6 +49,7 @@ function showScreen(name) {
   Object.entries(screens).forEach(([key, el]) => {
     el.style.display = key === name ? '' : 'none';
   });
+  document.getElementById('btn-topbar-back').style.display = name === 'list' ? 'none' : '';
 }
 
 function stopWatchingCurrent() {
@@ -97,12 +98,26 @@ onSnapshot(query(tournamentsCol, orderBy('createdAt', 'desc'), limit(25)), snap 
 // ---------------------------------------------------------------
 // Create tournament
 // ---------------------------------------------------------------
+const pointsSelect = document.getElementById('new-points');
+const pointsCustomField = document.getElementById('new-points-custom-field');
+const pointsCustomInput = document.getElementById('new-points-custom');
+
+pointsSelect.addEventListener('change', () => {
+  pointsCustomField.style.display = pointsSelect.value === 'other' ? '' : 'none';
+});
+
 document.getElementById('form-new-tournament').addEventListener('submit', async e => {
   e.preventDefault();
   const name = document.getElementById('new-name').value.trim();
-  const pointsPerRound = parseInt(document.getElementById('new-points').value, 10);
+  const pointsPerRound = pointsSelect.value === 'other'
+    ? Math.max(1, parseInt(pointsCustomInput.value, 10) || 0)
+    : parseInt(pointsSelect.value, 10);
   const courts = parseInt(document.getElementById('new-courts').value, 10);
   if (!name) return;
+  if (pointsSelect.value === 'other' && !pointsPerRound) {
+    alert('Enter how many points each round should be played to.');
+    return;
+  }
 
   const docRef = await addDoc(tournamentsCol, {
     name,
@@ -114,7 +129,8 @@ document.getElementById('form-new-tournament').addEventListener('submit', async 
     createdAt: serverTimestamp()
   });
   document.getElementById('form-new-tournament').reset();
-  document.getElementById('new-points').value = '24';
+  pointsSelect.value = '16';
+  pointsCustomField.style.display = 'none';
   document.getElementById('new-courts').value = '2';
   openTournament(docRef.id);
 });
@@ -218,6 +234,7 @@ function renderPlayerChips(container, { allowRemove }) {
 }
 
 document.getElementById('btn-back-to-list').addEventListener('click', backToList);
+document.getElementById('btn-topbar-back').addEventListener('click', backToList);
 
 document.getElementById('btn-start-tournament').addEventListener('click', () => {
   if (!currentData || (currentData.players || []).length < 4) return;
@@ -408,10 +425,16 @@ document.getElementById('btn-done-back').addEventListener('click', backToList);
 function renderDone() {
   document.getElementById('done-title').textContent = currentData.name;
   const standings = computeStandings(currentData.players || [], currentData.rounds || []);
-  const winner = standings[0];
-  document.getElementById('done-winner').textContent = winner
-    ? `ðŸ† ${winner.name} - ${winner.points} points`
-    : 'No scores were recorded.';
+  const winners = getTournamentWinners(standings);
+  const winnerLabel = document.getElementById('done-winner');
+  if (winners.length === 0) {
+    winnerLabel.textContent = 'No scores were recorded.';
+  } else if (winners.length === 1) {
+    winnerLabel.textContent = `Winner: ${winners[0].name} - ${winners[0].points} points`;
+  } else {
+    const names = winners.map(w => w.name).join(' & ');
+    winnerLabel.textContent = `Joint winners: ${names} - ${winners[0].points} points each`;
+  }
   renderStandingsInto('done-standings-body');
 }
 

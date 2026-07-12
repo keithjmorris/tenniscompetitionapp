@@ -1,6 +1,6 @@
 // scheduler.js
 // Americano round-generation engine for a club with a FIXED number of courts
-// (default 2). Pure functions only â€” no Firebase, no DOM â€” so this file can
+// (default 2). Pure functions only - no Firebase, no DOM - so this file can
 // be tested or reused on its own.
 //
 // Data shapes used throughout:
@@ -253,4 +253,18 @@ export function computeStandings(players, rounds) {
       pointDiff: (totals[p.id] || 0) - (conceded[p.id] || 0)
     }))
     .sort((a, b) => b.points - a.points || b.pointDiff - a.pointDiff || a.name.localeCompare(b.name));
+}
+
+/**
+ * The tournament's winner(s): every player tied for the highest points
+ * total. Padel Americano/Mexicano rules define the winner purely by total
+ * points, so ties on points are joint winners regardless of point
+ * differential (which is only used to break ties in the ranked table).
+ * Returns an empty array if no points have been recorded yet.
+ */
+export function getTournamentWinners(standings) {
+  if (standings.length === 0) return [];
+  const topPoints = standings[0].points;
+  if (topPoints === 0) return [];
+  return standings.filter(s => s.points === topPoints);
 }
