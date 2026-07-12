@@ -77,7 +77,7 @@ function render(t, isLive) {
     const winner = standings[0];
     roundHtml = `
       <div class="empty-state" style="padding-top:0.5rem;">
-        <h3>${winner ? `ðŸ† ${escapeHtml(winner.name)}` : 'Tournament complete'}</h3>
+        <h3>${winner ? `🏆 ${escapeHtml(winner.name)}` : 'Tournament complete'}</h3>
         <p>${winner ? `Won with ${winner.points} points` : ''}</p>
       </div>
     `;

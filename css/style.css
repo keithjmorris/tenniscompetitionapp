@@ -735,6 +735,94 @@ details.card[open] summary::before {
 }
 
 /* ============================================================
+   Add to Home Screen prompt
+   ============================================================ */
+
+.a2hs-banner {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1000;
+  display: flex;
+  justify-content: center;
+  padding: 1rem;
+  animation: a2hs-slide-up 0.35s ease;
+}
+
+@keyframes a2hs-slide-up {
+  from { transform: translateY(100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.a2hs-banner__card {
+  position: relative;
+  width: 100%;
+  max-width: 420px;
+  background: var(--ink);
+  color: var(--chalk);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--line);
+  padding: 1.25rem 1.5rem 1.5rem;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.35);
+}
+
+.a2hs-banner__close {
+  position: absolute;
+  top: 0.6rem;
+  right: 0.6rem;
+  background: none;
+  border: none;
+  color: var(--slate-light);
+  font-size: 1.4rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0.3em 0.5em;
+  border-radius: 50%;
+}
+
+.a2hs-banner__close:hover {
+  background: rgba(243, 241, 231, 0.12);
+  color: var(--chalk);
+}
+
+.a2hs-banner__title {
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  font-weight: 700;
+  font-size: 1.15rem;
+  color: var(--volt);
+  margin-bottom: 0.3rem;
+  padding-right: 1.5rem;
+}
+
+.a2hs-banner__lead {
+  margin: 0 0 0.6rem;
+  color: var(--slate-light);
+  font-size: 0.9rem;
+}
+
+.a2hs-banner__steps {
+  margin: 0;
+  padding-left: 1.2rem;
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+.a2hs-banner__steps li {
+  margin-bottom: 0.35rem;
+}
+
+.a2hs-banner__steps strong {
+  color: var(--volt);
+  font-weight: 700;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .a2hs-banner { animation: none; }
+}
+
+/* ============================================================
    Responsive
    ============================================================ */
 
@@ -745,4 +833,5 @@ details.card[open] summary::before {
   .court-card__score { gap: 0.4rem; font-size: 1.5rem; }
   .court-card__score-input, .court-card__score-value { width: 2.1ch; font-size: 1.3rem; padding: 0.15em 0.05em; }
   .topbar { padding: 1rem; }
+  .a2hs-banner__card { max-width: none; }
 }
