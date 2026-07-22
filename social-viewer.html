@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Social Play Live - Court Sheet</title>
+<link rel="stylesheet" href="css/style.css">
+<link rel="icon" type="image/png" href="tennistournament.png">
+<link rel="apple-touch-icon" href="tennistournament.png">
+<meta name="theme-color" content="#12181b">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Social Play Live">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+</head>
+<body class="viewer">
+  <div class="topbar">
+    <div class="topbar__brand">
+      <h1 id="viewer-session-name">Court&nbsp;Sheet</h1>
+    </div>
+    <span id="viewer-status" class="live-dot">Live</span>
+  </div>
+
+  <div class="wrap">
+    <div id="viewer-content">
+      <div class="empty-state">
+        <h3>Waiting for a session...</h3>
+        <p>Nothing is currently in progress. Check back once the organiser starts one.</p>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="js/social-viewer.js"></script>
+  <script type="module" src="js/add-to-home.js"></script>
+</body>
+</html>

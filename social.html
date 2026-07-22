@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Social Play - Court Sheet</title>
+<link rel="stylesheet" href="css/style.css">
+<link rel="icon" type="image/png" href="tennistournament.png">
+<link rel="apple-touch-icon" href="tennistournament.png">
+<link rel="manifest" href="manifest-social.json">
+<meta name="theme-color" content="#12181b">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Court Sheet Social">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+</head>
+<body>
+  <div class="topbar">
+    <div class="topbar__brand">
+      <h1>Court&nbsp;Sheet</h1>
+      <span>Social Play</span>
+    </div>
+    <div id="topbar-actions">
+      <button id="btn-topbar-back" class="btn btn--ghost btn--small" style="display:none; border-color:var(--chalk); color:var(--chalk);">All Sessions</button>
+    </div>
+  </div>
+
+  <div class="wrap">
+
+    <!-- SCREEN: session list + member directory -->
+    <section id="screen-list">
+      <div class="card">
+        <h2>Start a new session</h2>
+        <form id="form-new-session" class="inline-form">
+          <div class="field" style="flex:2 1 220px;">
+            <label for="new-session-name">Session name</label>
+            <input id="new-session-name" type="text" placeholder="e.g. Sunday 26 July" required>
+          </div>
+          <div class="field">
+            <label for="new-session-courts">Courts</label>
+            <select id="new-session-courts">
+              <option value="2" selected>2</option>
+              <option value="1">1</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="new-session-mixed">Mixed doubles</label>
+            <select id="new-session-mixed">
+              <option value="yes" selected>Prefer mixed pairs</option>
+              <option value="no">No preference</option>
+            </select>
+          </div>
+          <button type="submit" class="btn btn--primary">Create</button>
+        </form>
+      </div>
+
+      <div class="card">
+        <h2>Resume or review</h2>
+        <div id="session-list" class="tourn-list">
+          <div class="empty-state"><p>Loading sessions...</p></div>
+        </div>
+      </div>
+
+      <details class="card">
+        <summary>Regular players directory</summary>
+        <p style="color:var(--slate); font-size:0.9rem; margin:0.75rem 0;">
+          Add your regular players once here, rate them 1 (beginner) to 5 (strong), and pick them from a
+          dropdown each week instead of retyping. Guests can still be added directly within a session.
+        </p>
+        <form id="form-add-member" class="inline-form">
+          <div class="field" style="flex:2 1 180px;">
+            <label for="member-name">Name</label>
+            <input id="member-name" type="text" placeholder="e.g. Chris M." required>
+          </div>
+          <div class="field">
+            <label for="member-rating">Rating</label>
+            <select id="member-rating">
+              <option value="1">1 - Beginner</option>
+              <option value="2">2</option>
+              <option value="3" selected>3 - Average</option>
+              <option value="4">4</option>
+              <option value="5">5 - Strong</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="member-gender">Gender (optional)</label>
+            <select id="member-gender">
+              <option value="">Not specified</option>
+              <option value="F">Female</option>
+              <option value="M">Male</option>
+            </select>
+          </div>
+          <button type="submit" class="btn btn--primary">Add player</button>
+        </form>
+        <div class="field" style="margin-top:1rem;">
+          <input id="member-search" type="text" placeholder="Search directory...">
+        </div>
+        <div id="member-directory-list" style="margin-top:0.75rem;"></div>
+      </details>
+    </section>
+
+    <!-- SCREEN: live session -->
+    <section id="screen-live" style="display:none;">
+      <div class="round-heading">
+        <h2 id="live-session-title">Session</h2>
+        <button id="btn-finish-session" class="btn btn--danger btn--small">Finish session</button>
+      </div>
+
+      <details class="card" open>
+        <summary>Check players in</summary>
+        <div class="field" style="margin-top:0.75rem;">
+          <label for="checkin-search">Add a regular player</label>
+          <input id="checkin-search" type="text" placeholder="Type a name...">
+        </div>
+        <div id="checkin-suggestions" class="chip-list" style="margin-bottom:1rem;"></div>
+
+        <form id="form-add-guest" class="inline-form">
+          <div class="field" style="flex:2 1 180px;">
+            <label for="guest-name">Add a guest / one-off player</label>
+            <input id="guest-name" type="text" placeholder="Name">
+          </div>
+          <div class="field">
+            <label for="guest-rating">Rating</label>
+            <select id="guest-rating">
+              <option value="1">1 - Beginner</option>
+              <option value="2">2</option>
+              <option value="3" selected>3 - Average</option>
+              <option value="4">4</option>
+              <option value="5">5 - Strong</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="guest-gender">Gender (optional)</label>
+            <select id="guest-gender">
+              <option value="">Not specified</option>
+              <option value="F">Female</option>
+              <option value="M">Male</option>
+            </select>
+          </div>
+          <button type="submit" class="btn btn--primary">Add guest</button>
+        </form>
+      </details>
+
+      <div class="card">
+        <h2>Checked in (<span id="checked-in-count">0</span>)</h2>
+        <p style="color:var(--slate); font-size:0.9rem; margin-top:-0.5rem;">Tap Check Out when someone leaves - they keep their game count, but won't be picked for future rounds.</p>
+        <div id="checked-in-chips" class="chip-list"></div>
+      </div>
+
+      <div class="round-heading">
+        <h2 id="live-round-title">Round 1</h2>
+      </div>
+      <p id="live-sitout-note" class="sitout-note"></p>
+      <div id="live-court-cards" class="court-cards"></div>
+      <div style="margin-bottom:2rem;">
+        <button id="btn-generate-round" class="btn btn--primary">Generate next round</button>
+      </div>
+
+      <div id="live-previous-rounds"></div>
+
+      <div class="card">
+        <h2>Participation</h2>
+        <table class="standings">
+          <thead>
+            <tr><th>Player</th><th class="num">Games played</th><th class="num">Sat out</th><th>Status</th></tr>
+          </thead>
+          <tbody id="live-stats-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- SCREEN: finished session -->
+    <section id="screen-done" style="display:none;">
+      <div class="card" style="text-align:center;">
+        <div class="landing__eyebrow" style="color:var(--clay);">Session complete</div>
+        <h2 id="done-title" style="font-size:2rem;"></h2>
+      </div>
+      <div class="card">
+        <h2>Final participation</h2>
+        <table class="standings">
+          <thead>
+            <tr><th>Player</th><th class="num">Games played</th><th class="num">Sat out</th></tr>
+          </thead>
+          <tbody id="done-stats-body"></tbody>
+        </table>
+      </div>
+      <button id="btn-done-back" class="btn btn--ghost">Back to sessions</button>
+    </section>
+
+  </div>
+
+  <script type="module" src="js/social.js"></script>
+  <script type="module" src="js/add-to-home.js"></script>
+</body>
+</html>
