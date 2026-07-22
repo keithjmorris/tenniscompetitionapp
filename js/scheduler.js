@@ -268,3 +268,197 @@ export function getTournamentWinners(standings) {
   if (topPoints === 0) return [];
   return standings.filter(s => s.points === topPoints);
 }
+
+// ============================================================
+// Social Play engine
+// ============================================================
+// A completely separate scheduling mode for casual, ongoing sessions
+// (e.g. Sunday morning club tennis): no fixed player list, no scores,
+// no partner-rotation requirement - just balanced, fair matches given
+// whoever is currently checked in. Kept independent from the Americano
+// functions above (rather than refactored to share code) so nothing here
+// can affect tournament behaviour.
+//
+// player  = { id, name, rating: 1-5, gender?: 'M'|'F'|'', active: boolean }
+// match   = { court, teamA: [id, id], teamB: [id, id] }  (no scores)
+// round   = { roundNumber, sitOut: [id...], matches: [match...] }
+
+/**
+ * Choose which currently-checked-in players play this round, and which
+ * sit out, prioritising whoever has sat out most / played fewest games so
+ * far - so a late arrival is naturally prioritised into the next round,
+ * and someone who has checked out simply stops being a candidate at all
+ * (they are filtered out by the caller before this runs).
+ */
+function selectActivePlayers(candidateIds, history, courts) {
+  const maxPlayers = courts * 4;
+
+  const sorted = [...candidateIds].sort((a, b) => {
+    const aSitOut = history.sitOutCount[a] || 0;
+    const bSitOut = history.sitOutCount[b] || 0;
+    if (bSitOut !== aSitOut) return bSitOut - aSitOut;
+    const aPlayed = history.playCount[a] || 0;
+    const bPlayed = history.playCount[b] || 0;
+    if (aPlayed !== bPlayed) return aPlayed - bPlayed;
+    return Math.random() - 0.5;
+  });
+
+  const poolSize = Math.min(maxPlayers, Math.floor(candidateIds.length / 4) * 4);
+  return { playing: sorted.slice(0, poolSize), sitOut: sorted.slice(poolSize) };
+}
+
+function socialTeamSplits4(four) {
+  const [w, x, y, z] = four;
+  return [
+    [[w, x], [y, z]],
+    [[w, y], [x, z]],
+    [[w, z], [x, y]]
+  ];
+}
+
+function socialCombinations(arr, k) {
+  const results = [];
+  const combo = [];
+  (function go(start) {
+    if (combo.length === k) { results.push([...combo]); return; }
+    for (let i = start; i < arr.length; i++) {
+      combo.push(arr[i]);
+      go(i + 1);
+      combo.pop();
+    }
+  })(0);
+  return results;
+}
+
+/**
+ * Score a candidate team split: lower is better. Dominated almost
+ * entirely by skill balance (squared rating-average gap between the two
+ * teams), with two much smaller nudges layered on top - a soft
+ * preference for mixed-gender teams, and a light discouragement of
+ * exact-repeat partnerships. Neither small nudge can outweigh a real
+ * balance difference; they only break ties between similarly-balanced
+ * options. `ratingById` here is whatever the caller passes in - it may
+ * already be gender-adjusted (see generateNextSocialRound below); this
+ * function doesn't need to know either way.
+ */
+function socialMatchPenalty(teamA, teamB, ratingById, genderById, history, preferMixedDoubles) {
+  const avg = ids => (((ratingById[ids[0]] ?? 3) + (ratingById[ids[1]] ?? 3)) / 2);
+  const diff = avg(teamA) - avg(teamB);
+  let penalty = diff * diff * 100;
+
+  if (preferMixedDoubles) {
+    const sameGender = ids => {
+      const g1 = genderById[ids[0]] || '';
+      const g2 = genderById[ids[1]] || '';
+      return g1 && g2 && g1 === g2;
+    };
+    if (sameGender(teamA)) penalty += 3;
+    if (sameGender(teamB)) penalty += 3;
+  }
+
+  penalty += (history.partner[pairKey(teamA[0], teamA[1])] || 0) * 0.5;
+  penalty += (history.partner[pairKey(teamB[0], teamB[1])] || 0) * 0.5;
+
+  return penalty;
+}
+
+function bestSocialArrangement(pool, ratingById, genderById, history, preferMixedDoubles) {
+  const bestSplitFor4 = (four) => {
+    let best = null;
+    socialTeamSplits4(four).forEach(([teamA, teamB]) => {
+      const s = socialMatchPenalty(teamA, teamB, ratingById, genderById, history, preferMixedDoubles);
+      if (!best || s < best.score) best = { score: s, teamA, teamB };
+    });
+    return best;
+  };
+
+  if (pool.length === 4) {
+    const best = bestSplitFor4(pool);
+    return [{ teamA: best.teamA, teamB: best.teamB }];
+  }
+
+  let best = null;
+  const others = pool.slice(1).map((_, i) => i + 1);
+  socialCombinations(others, 3).forEach(combo => {
+    const court1Idx = new Set([0, ...combo]);
+    const court1 = pool.filter((_, i) => court1Idx.has(i));
+    const court2 = pool.filter((_, i) => !court1Idx.has(i));
+    const bestC1 = bestSplitFor4(court1);
+    const bestC2 = bestSplitFor4(court2);
+    const total = bestC1.score + bestC2.score;
+    if (!best || total < best.score) {
+      best = {
+        score: total,
+        courts: [
+          { teamA: bestC1.teamA, teamB: bestC1.teamB },
+          { teamA: bestC2.teamA, teamB: bestC2.teamB }
+        ]
+      };
+    }
+  });
+  return best.courts;
+}
+
+/**
+ * Generate the next Social Play round from whoever is currently checked
+ * in (player.active !== false). Throws if fewer than 4 are checked in.
+ *
+ * options.genderAdjustment (default 0): a men's and women's rating of the
+ * same number aren't necessarily the same playing strength, so this
+ * shifts men's ratings down and women's up by half this amount each,
+ * purely for the balancing calculation - e.g. an adjustment of 1 means a
+ * men's 5 and a women's 5 are treated as 1 full point apart. Only players
+ * with gender 'M' or 'F' set are adjusted; unspecified gender is left as
+ * entered. Raw ratings (as stored and displayed) are never changed.
+ */
+export function generateNextSocialRound(players, rounds, courts = 2, options = {}) {
+  const preferMixedDoubles = !!options.preferMixedDoubles;
+  const genderAdjustment = Number.isFinite(options.genderAdjustment) ? options.genderAdjustment : 0;
+  const activeIds = players.filter(p => p.active !== false).map(p => p.id);
+
+  if (activeIds.length < 4) {
+    throw new Error('Need at least 4 checked-in players to generate a round.');
+  }
+
+  const history = buildHistory(players, rounds);
+  const { playing, sitOut } = selectActivePlayers(activeIds, history, courts);
+
+  if (playing.length < 4) {
+    throw new Error('Not enough checked-in players to fill a court this round.');
+  }
+
+  const genderById = {};
+  const effectiveRatingById = {};
+  players.forEach(p => {
+    const raw = p.rating ?? 3;
+    genderById[p.id] = p.gender || '';
+    if (genderAdjustment && p.gender === 'M') effectiveRatingById[p.id] = raw - genderAdjustment / 2;
+    else if (genderAdjustment && p.gender === 'F') effectiveRatingById[p.id] = raw + genderAdjustment / 2;
+    else effectiveRatingById[p.id] = raw;
+  });
+
+  const arrangement = bestSocialArrangement(playing, effectiveRatingById, genderById, history, preferMixedDoubles);
+
+  const matches = arrangement.map((c, i) => ({ court: i + 1, teamA: c.teamA, teamB: c.teamB }));
+
+  return { roundNumber: rounds.length + 1, sitOut, matches };
+}
+
+/**
+ * Participation stats for a Social Play session: games played and times
+ * sat out per player, sorted by fewest games played first (so the
+ * organiser can see at a glance who's due a game next). No points or
+ * rankings involved - this is purely a fairness check, not a leaderboard.
+ */
+export function computeSocialStats(players, rounds) {
+  const history = buildHistory(players, rounds);
+  return players
+    .map(p => ({
+      id: p.id,
+      name: p.name,
+      gamesPlayed: history.playCount[p.id] || 0,
+      satOut: history.sitOutCount[p.id] || 0,
+      active: p.active !== false
+    }))
+    .sort((a, b) => a.gamesPlayed - b.gamesPlayed || a.name.localeCompare(b.name));
+}
